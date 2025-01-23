@@ -26,22 +26,40 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable,Server,Reliable)
-	void Server_Move(FVector Direction);
+	void Server_Move(FVector_NetQuantize Direction);
+
+	UFUNCTION(BlueprintCallable,Server,Reliable)
+	void Server_Rotate(FVector_NetQuantize Rotation);
 	
 	UFUNCTION(BlueprintCallable)
 	void InputMove(FVector2D InputValue);
+
+	UFUNCTION(BlueprintCallable)
+	void InputRotate(FVector2D InputValue);
 	
 private:
 
 	UFUNCTION()
 	void OnRep_SpaceshipLocation(FVector_NetQuantize OldLocation);
 
+	UFUNCTION()
+	void OnRep_SpaceshipRotation(FVector_NetQuantize OldRotation);
+
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Cosmetic")
 	TObjectPtr<UStaticMeshComponent> Cabin;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Movements")
+	float MoveSpeed = 100.f;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Movements")
+	float TurnSpeed = 100.f;
 
 	UPROPERTY(ReplicatedUsing="OnRep_SpaceshipLocation")
 	FVector_NetQuantize SpaceshipLocation;
+
+	UPROPERTY(ReplicatedUsing="OnRep_SpaceshipRotation")
+	FVector_NetQuantize SpaceshipRotation;
 };
