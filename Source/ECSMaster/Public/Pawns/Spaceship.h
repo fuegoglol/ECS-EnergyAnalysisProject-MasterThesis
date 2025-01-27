@@ -6,6 +6,10 @@
 
 #include "Spaceship.generated.h"
 
+class ASpaceRocket;
+class USpringArmComponent;
+class UCameraComponent;
+
 UCLASS()
 class ECSMASTER_API ASpaceship : public APawn
 {
@@ -30,12 +34,18 @@ protected:
 
 	UFUNCTION(BlueprintCallable,Server,Reliable)
 	void Server_Rotate(FVector_NetQuantize Rotation);
+
+	UFUNCTION(BlueprintCallable,Server,Reliable)
+	void Server_Fire();
 	
 	UFUNCTION(BlueprintCallable)
 	void InputMove(FVector2D InputValue);
 
 	UFUNCTION(BlueprintCallable)
 	void InputRotate(FVector2D InputValue);
+
+	UFUNCTION(BlueprintCallable)
+	void InputFire();
 	
 private:
 
@@ -43,19 +53,36 @@ private:
 	void OnRep_SpaceshipLocation(FVector_NetQuantize OldLocation);
 
 	UFUNCTION()
-	void OnRep_SpaceshipRotation(FVector_NetQuantize OldRotation);
+	void OnRep_SpaceshipRotation(const FVector_NetQuantize& OldRotation);
 
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Cosmetic")
+	// Mesh
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Mesh")
 	TObjectPtr<UStaticMeshComponent> Cabin;
+
+	// Camera related
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Camera")
+	TObjectPtr<UCameraComponent> Camera;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Camera")
+	TObjectPtr<USpringArmComponent> SpringArm;
+
+	// Projectile
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Projectile")
+	TSubclassOf<ASpaceRocket> RocketClass;
+
+	// Speed
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Movements")
 	float MoveSpeed = 100.f;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Movements")
 	float TurnSpeed = 100.f;
+
+	// Transform
 
 	UPROPERTY(ReplicatedUsing="OnRep_SpaceshipLocation")
 	FVector_NetQuantize SpaceshipLocation;
