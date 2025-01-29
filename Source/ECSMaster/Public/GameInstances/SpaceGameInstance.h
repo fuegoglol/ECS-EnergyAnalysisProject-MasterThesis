@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
+#include "../flecs/flecs.h"
 #include "SpaceGameInstance.generated.h"
 
 UENUM()
@@ -33,4 +33,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	TEnumAsByte<EKeyboardLayout> KeyboardLayout;
+
+	flecs::world ECSWorld;
 };

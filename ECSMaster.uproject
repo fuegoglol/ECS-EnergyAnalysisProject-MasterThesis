@@ -20,6 +20,10 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "Flecs",
+			"Enabled": true
 		}
 	]
 }
