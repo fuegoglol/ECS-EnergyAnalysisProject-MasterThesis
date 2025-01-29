@@ -1,9 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
+#include "GameInstances/SpaceGameInstance.h"
 #if PLATFORM_WINDOWS
 #include "Windows/WindowsHWrapper.h"
 #endif
-#include "GameInstances/SpaceGameInstance.h"
+
 
 void USpaceGameInstance::Init()
 {
