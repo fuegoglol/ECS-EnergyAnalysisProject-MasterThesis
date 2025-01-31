@@ -22,8 +22,11 @@
 			]
 		},
 		{
-			"Name": "Flecs",
-			"Enabled": true
+			"Name": "FPSSocketStreaming",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		}
 	]
 }

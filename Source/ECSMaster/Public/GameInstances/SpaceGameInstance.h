@@ -29,6 +29,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TEnumAsByte<EKeyboardLayout> GetKeyboardLayoutInternal() const {return KeyboardLayout;}
 
+	flecs::world* GetECSWorld() {return &ECSWorld;}
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly)
