@@ -19,21 +19,29 @@ public:
 	// Sets default values for this actor's properties
 	ASpaceshipsManager();
 
+	UFUNCTION(BlueprintCallable)
+	void AddPlayer(AController* PlayerController);
+
+	UFUNCTION(BlueprintCallable)
+	void AddPlayerInput(AController* PlayerController, float MovementInput, FVector2D RotationInput);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION(Client,Reliable)
-	void Client_UpdateSpaceships(int32 Id, FVector_NetQuantize NewLocation, FRotator NewRotation);
+	UFUNCTION(Server,Reliable)
+	void Server_AddPlayer(AController* PlayerController);
 
 	UFUNCTION(Server,Reliable)
-	void Server_AddPlayer();
+	void Server_AddPlayerInput(int32 PlayerId, float MovementInput, FVector2D RotationInput);
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&) const override;
+
+	FORCEINLINE FTransform GetSpaceshipTransform(int32 Id) { return SpaceshipTransforms[Id];}
 
 protected:
 
@@ -60,5 +68,5 @@ protected:
 	int32 LastFreePlayerId = 0;
 
 	UPROPERTY(Replicated)
-	int32 PlayerId = -1;
+	TArray<FTransform> SpaceshipTransforms;
 };

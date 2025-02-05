@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "SpaceshipController.generated.h"
 
+class ASpaceshipsManager;
 /**
  * 
  */
@@ -15,6 +16,18 @@ class ECSMASTER_API ASpaceshipController : public APlayerController
 {
 	GENERATED_BODY()
 
+	ASpaceshipController();
+	
+public:
+
+	UPROPERTY(Replicated)
+	int32 PlayerId = 0;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(Server,Reliable)
+	void AddPlayerInput(float MovementInput, FVector2D RotInput);
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -26,5 +39,7 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TSoftObjectPtr<UInputMappingContext> InputMapping_QWERTY;
+
+	TObjectPtr<ASpaceshipsManager> SpaceshipManager;
 	
 };

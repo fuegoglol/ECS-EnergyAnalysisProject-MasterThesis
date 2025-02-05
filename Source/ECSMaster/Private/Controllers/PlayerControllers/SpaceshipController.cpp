@@ -3,8 +3,16 @@
 
 #include "Controllers/PlayerControllers/SpaceshipController.h"
 #include "EnhancedInputSubsystems.h"
+#include "Actors/SpaceshipsManager.h"
 #include "GameInstances/SpaceGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
+
+
+ASpaceshipController::ASpaceshipController()
+{
+	bReplicates = true;
+}
 
 void ASpaceshipController::BeginPlay()
 {
@@ -46,5 +54,25 @@ void ASpaceshipController::BeginPlay()
 				}
 			}
 		}
+	}
+
+	if(const auto SpaceshipManagerUncasted = UGameplayStatics::GetActorOfClass(GetWorld(),ASpaceshipsManager::StaticClass()))
+	{
+		SpaceshipManager = Cast<ASpaceshipsManager>(SpaceshipManagerUncasted);
+	}
+}
+
+void ASpaceshipController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ASpaceshipController,PlayerId);
+}
+
+void ASpaceshipController::AddPlayerInput_Implementation(float MovementInput, FVector2D RotInput)
+{
+	if(SpaceshipManager)
+	{
+		SpaceshipManager->AddPlayerInput(this,MovementInput,RotInput);
 	}
 }
