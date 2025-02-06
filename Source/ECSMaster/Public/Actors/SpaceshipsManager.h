@@ -49,6 +49,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Mesh")
 	TObjectPtr<UInstancedStaticMeshComponent> SpaceshipsSMInstances;
 
+	// Used to display bullets
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Mesh")
+	TObjectPtr<UInstancedStaticMeshComponent> BulletsSMInstances;
+
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Spawn")
 	int NumberOfSpaceships = 500;
 
@@ -69,4 +73,7 @@ protected:
 
 	UPROPERTY(Replicated)
 	TArray<FTransform> SpaceshipTransforms;
+
+	UPROPERTY(Replicated)
+	TArray<FTransform> BulletTransforms;
 };

@@ -26,6 +26,8 @@ public:
 	
 	virtual void Init() override;
 
+	virtual void Shutdown() override;
+
 	UFUNCTION(BlueprintCallable)
 	TEnumAsByte<EKeyboardLayout> GetKeyboardLayoutInternal() const {return KeyboardLayout;}
 

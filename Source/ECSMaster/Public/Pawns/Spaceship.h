@@ -38,6 +38,8 @@ protected:
 	UFUNCTION(BlueprintCallable,Server,Reliable)
 	void Server_Fire();
 	
+public:
+	
 	UFUNCTION(BlueprintCallable)
 	void InputMove(FVector2D InputValue);
 

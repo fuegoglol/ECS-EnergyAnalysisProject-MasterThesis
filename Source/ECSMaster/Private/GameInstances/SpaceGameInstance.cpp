@@ -31,3 +31,8 @@ void USpaceGameInstance::Init()
 #endif
 
 }
+
+void USpaceGameInstance::Shutdown()
+{
+	Super::Shutdown();
+}

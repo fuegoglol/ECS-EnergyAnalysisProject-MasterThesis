@@ -9,11 +9,24 @@ struct FSpaceship
 
 struct FSpaceshipTransform
 {
-	FVector_NetQuantize Location;
+	FVector_NetQuantize10 Location;
 	FRotator Rotation;
 };
 
 struct FSpaceshipAI
 {
 	double Seed;
+};
+
+struct FWeapon
+{
+	float FireDelay;
+	float FireCooldown = 5;
+};
+
+struct FBullet
+{
+	FVector_NetQuantize10 Location;
+	FVector ForwardVector;
+	double Lifetime = 10;
 };

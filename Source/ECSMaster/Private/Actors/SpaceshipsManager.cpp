@@ -23,6 +23,10 @@ ASpaceshipsManager::ASpaceshipsManager()
 	// Used to display spaceships
 	SpaceshipsSMInstances = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Spaceships"));
 	SpaceshipsSMInstances->SetupAttachment(RootComponent);
+
+	// Used to display bullets
+	BulletsSMInstances = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Bullets"));
+	BulletsSMInstances->SetupAttachment(RootComponent);
 #endif
 }
 
@@ -75,11 +79,18 @@ void ASpaceshipsManager::BeginPlay()
 				Location,
 				Rotation
 			});
-			
 
+			// Weapon
+			const float FireDelay = UKismetMathLibrary::RandomFloatInRange(5,10);
+			Spaceship.set<FWeapon>({
+				FireDelay,
+				FireDelay
+			});
+
+			
 			// AI
 			Spaceship.set<FSpaceshipAI>({
-				UKismetMathLibrary::RandomFloat()
+				UKismetMathLibrary::FClamp(UKismetMathLibrary::RandomFloat(),0.1,1) 
 			});
 		}
 		
@@ -108,9 +119,9 @@ void ASpaceshipsManager::BeginPlay()
 
 	
 	
-	// Movement system for AI
-	
+	// AI move sys
 	auto move_sys = ECSWorld->system<FSpaceship,FSpaceshipTransform, FSpaceshipAI>()
+	.kind(flecs::PreUpdate)
 	.each([this](flecs::iter& it, size_t, FSpaceship& S, FSpaceshipTransform& T, FSpaceshipAI& AI) {
 		// Rotation
 		T.Rotation.Yaw += S.BaseRotationSpeed * AI.Seed;
@@ -121,6 +132,62 @@ void ASpaceshipsManager::BeginPlay()
 		SpaceshipTransforms[S.Id] = FTransform(T.Rotation,T.Location);
 	});
 
+	// AI fire sys
+	auto fire_sys = ECSWorld->system<FWeapon,FSpaceshipTransform, FSpaceshipAI>()
+	.kind(flecs::PreUpdate)
+	.each([this](flecs::iter& it, size_t, FWeapon& W, FSpaceshipTransform& T, FSpaceshipAI& AI) {
+		// Firing bullet
+		if(W.FireCooldown <= 0)
+		{
+			const auto Bullet = ECSWorld->entity();
+			Bullet.set<FBullet>({
+				T.Location,
+				T.Rotation.Vector(),
+				5
+			});
+
+			BulletTransforms.Add(FTransform(T.Location));
+			
+			W.FireCooldown = W.FireDelay*AI.Seed;
+		}
+		else
+		{
+			W.FireCooldown-=it.delta_time();
+		}
+	});
+
+	// Bullet sys
+	auto bullet_sys = ECSWorld->system<FBullet>()
+	.kind(flecs::OnUpdate)
+	.each([this](flecs::iter& it, size_t index, FBullet& B) {
+		if(B.Lifetime <= 0)
+		{
+			if(BulletTransforms.IsValidIndex(index))
+				BulletTransforms.RemoveAt(index);
+			it.entity(index).destruct();
+		}
+		else
+		{
+			if(BulletTransforms.IsValidIndex(index))
+			{
+				// Location
+			B.Location += B.ForwardVector * 10000 * it.delta_time();
+			
+				BulletTransforms[index] = FTransform(B.Location);
+
+			B.Lifetime -= it.delta_time();
+			}
+			else
+			{
+				it.entity(index).destruct();
+			}
+			
+		}
+		
+		
+		
+	});
+
 #endif
 
 
@@ -129,6 +196,10 @@ void ASpaceshipsManager::BeginPlay()
 
 void ASpaceshipsManager::Server_AddPlayer_Implementation(AController* PlayerController)
 {
+#if UE_EDITOR
+	if(PlayerController->IsLocalController()) return;
+#endif
+	
 	flecs::entity ShipToAttribute = SpaceshipMovementUpdateQuery.find([this](FSpaceship& s, FSpaceshipTransform& T)
 	{
 		return s.Id == LastFreePlayerId;
@@ -184,6 +255,12 @@ void ASpaceshipsManager::Tick(float DeltaTime)
 		0,
 		SpaceshipTransforms,
 		true);
+
+		if(BulletTransforms.Num() > 0)
+		{
+			BulletsSMInstances->ClearInstances();
+			BulletsSMInstances->AddInstances(BulletTransforms,false,true);
+		}
 #endif
 		
 	}
@@ -193,7 +270,15 @@ void ASpaceshipsManager::Tick(float DeltaTime)
 		0,
 		SpaceshipTransforms,
 		true);
+
+		if(BulletTransforms.Num() > 0)
+		{
+			BulletsSMInstances->ClearInstances();
+			BulletsSMInstances->AddInstances(BulletTransforms,false,true);
+		}
 	}
+
+	
 }
 
 void ASpaceshipsManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -201,5 +286,6 @@ void ASpaceshipsManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ASpaceshipsManager,SpaceshipTransforms);
+	DOREPLIFETIME(ASpaceshipsManager,BulletTransforms);
 }
 
