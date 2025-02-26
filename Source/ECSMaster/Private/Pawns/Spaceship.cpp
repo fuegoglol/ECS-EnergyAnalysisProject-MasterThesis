@@ -17,7 +17,8 @@ ASpaceship::ASpaceship()
 	PrimaryActorTick.bCanEverTick = false;
 
 	Cabin = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cabin"));
-	Cabin->SetupAttachment(RootComponent);
+
+	SetRootComponent(Cabin);
 
 #if !UE_SERVER || UE_EDITOR
 

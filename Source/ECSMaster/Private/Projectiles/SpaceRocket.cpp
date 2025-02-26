@@ -13,7 +13,8 @@ ASpaceRocket::ASpaceRocket()
 	PrimaryActorTick.bCanEverTick = false;
 
 	BulletShape = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Bullet"));
-	BulletShape->SetupAttachment(RootComponent);
+
+	SetRootComponent(BulletShape);
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("Projectile Component");
 
