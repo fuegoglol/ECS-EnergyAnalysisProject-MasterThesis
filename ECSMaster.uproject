@@ -22,7 +22,7 @@
 			]
 		},
 		{
-			"Name": "FPSSocketStreaming",
+			"Name": "JPFMonitoringPlugin",
 			"Enabled": true,
 			"TargetAllowList": [
 				"Editor"
