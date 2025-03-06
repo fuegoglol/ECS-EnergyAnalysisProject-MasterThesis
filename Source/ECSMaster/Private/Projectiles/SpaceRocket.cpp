@@ -25,6 +25,17 @@ ASpaceRocket::ASpaceRocket()
 void ASpaceRocket::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FTimerHandle TH;
+	GetWorld()->GetTimerManager().SetTimer(
+		TH,
+		[this]()
+		{
+			Destroy();
+		},
+		5,
+		false,
+		5);
 	
 }
 

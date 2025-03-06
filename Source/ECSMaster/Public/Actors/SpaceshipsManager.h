@@ -60,10 +60,10 @@ protected:
 	int SpawnRadius = 10000;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Movement")
-	float BaseSpaceshipTranslationSpeed = 500;
+	float BaseSpaceshipTranslationSpeed = 5000;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Movement")
-	float BaseSpaceshipRotationSpeed = 500;
+	float BaseSpaceshipRotationSpeed = 5000;
 
 	const flecs::world* ECSWorld;
 

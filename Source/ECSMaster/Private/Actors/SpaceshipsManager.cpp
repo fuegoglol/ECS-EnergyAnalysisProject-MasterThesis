@@ -79,18 +79,18 @@ void ASpaceshipsManager::BeginPlay()
 				Location,
 				Rotation
 			});
+			
+			// AI
+			const float Seed = UKismetMathLibrary::FClamp(UKismetMathLibrary::RandomFloat(),0.1,1);
+			Spaceship.set<FSpaceshipAI>({
+				Seed 
+			});
 
 			// Weapon
 			const float FireDelay = UKismetMathLibrary::RandomFloatInRange(5,10);
 			Spaceship.set<FWeapon>({
 				FireDelay,
-				FireDelay
-			});
-
-			
-			// AI
-			Spaceship.set<FSpaceshipAI>({
-				UKismetMathLibrary::FClamp(UKismetMathLibrary::RandomFloat(),0.1,1) 
+				FireDelay*Seed
 			});
 		}
 		
@@ -124,8 +124,8 @@ void ASpaceshipsManager::BeginPlay()
 	.kind(flecs::PreUpdate)
 	.each([this](flecs::iter& it, size_t, FSpaceship& S, FSpaceshipTransform& T, FSpaceshipAI& AI) {
 		// Rotation
-		T.Rotation.Yaw += S.BaseRotationSpeed * AI.Seed;
-		T.Rotation.Roll += S.BaseRotationSpeed * AI.Seed;
+		T.Rotation.Yaw += S.BaseRotationSpeed * AI.Seed * it.delta_time();
+		T.Rotation.Roll += S.BaseRotationSpeed * AI.Seed * it.delta_time();
 		// Location
 		T.Location += T.Rotation.Vector() * S.BaseTranslationSpeed * it.delta_time() * AI.Seed;
 

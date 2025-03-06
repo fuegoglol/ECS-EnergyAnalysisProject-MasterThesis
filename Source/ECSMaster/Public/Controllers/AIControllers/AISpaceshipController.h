@@ -24,8 +24,8 @@ protected:
 	TObjectPtr<ASpaceship> ControlledSpaceship;
 
 	double Seed = 1;
-	int FireCooldown = 5;
-	int FireDelay = 5;
+	float FireCooldown = 5;
+	float FireDelay = 5;
 
 public:
 	// Called every frame
