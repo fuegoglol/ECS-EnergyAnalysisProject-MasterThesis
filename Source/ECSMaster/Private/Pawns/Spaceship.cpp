@@ -5,7 +5,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "../ECSMaster.h"
 #include "Net/UnrealNetwork.h"
 #include "Projectiles/SpaceRocket.h"
 
@@ -20,7 +20,7 @@ ASpaceship::ASpaceship()
 
 	SetRootComponent(Cabin);
 
-#if !UE_SERVER || UE_EDITOR
+#if !UE_SERVER || UE_EDITOR || DO_CLIENT_SIMULATION
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 	SpringArm->SetupAttachment(Cabin);
@@ -53,7 +53,7 @@ void ASpaceship::BeginPlay()
 
 void ASpaceship::Server_Move_Implementation(FVector_NetQuantize Direction)
 {
-#if UE_SERVER || UE_EDITOR
+#if UE_SERVER || UE_EDITOR || DO_CLIENT_SIMULATION
 	SpaceshipLocation += Direction;
 	OnRep_SpaceshipLocation(GetActorLocation());
 #endif
@@ -61,7 +61,7 @@ void ASpaceship::Server_Move_Implementation(FVector_NetQuantize Direction)
 
 void ASpaceship::Server_Rotate_Implementation(FVector_NetQuantize Rotation)
 {
-#if UE_SERVER || UE_EDITOR
+#if UE_SERVER || UE_EDITOR || DO_CLIENT_SIMULATION
 	SpaceshipRotation += Rotation;
 	OnRep_SpaceshipRotation(SpaceshipRotation - Rotation);
 #endif
@@ -69,7 +69,7 @@ void ASpaceship::Server_Rotate_Implementation(FVector_NetQuantize Rotation)
 
 void ASpaceship::Server_Fire_Implementation()
 {
-#if UE_SERVER || UE_EDITOR
+#if UE_SERVER || UE_EDITOR || DO_CLIENT_SIMULATION
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	GetWorld()->SpawnActor<ASpaceRocket>(RocketClass,GetActorLocation(),GetActorRotation(),SpawnParameters);

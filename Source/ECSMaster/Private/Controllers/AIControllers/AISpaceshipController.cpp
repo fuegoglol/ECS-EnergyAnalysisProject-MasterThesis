@@ -3,21 +3,23 @@
 
 #include "Controllers/AIControllers/AISpaceshipController.h"
 
-#include "Kismet/KismetMathLibrary.h"
 #include "Pawns/Spaceship.h"
 
 
 // Sets default values
 AAISpaceshipController::AAISpaceshipController()
 {
-	Seed = UKismetMathLibrary::FClamp(UKismetMathLibrary::RandomFloat(),0.1,1);
-
-	FireDelay = UKismetMathLibrary::RandomFloatInRange(5.f,10.f);
-	FireCooldown = FireDelay*Seed;
 	
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
+}
+
+void AAISpaceshipController::SetDefaultValues(float DefaultSeed, float DefaultFireDelay)
+{
+	Seed = DefaultSeed;
+	FireDelay = DefaultFireDelay;
+	FireCooldown = FireDelay*Seed;
 }
 
 // Called when the game starts or when spawned

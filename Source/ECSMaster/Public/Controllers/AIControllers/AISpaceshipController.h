@@ -17,13 +17,15 @@ public:
 	// Sets default values for this actor's properties
 	AAISpaceshipController();
 
+	void SetDefaultValues(float DefaultSeed, float DefaultFireDelay);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	TObjectPtr<ASpaceship> ControlledSpaceship;
 
-	double Seed = 1;
+	float Seed = 1;
 	float FireCooldown = 5;
 	float FireDelay = 5;
 

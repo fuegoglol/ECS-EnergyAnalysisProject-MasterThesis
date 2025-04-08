@@ -4,3 +4,6 @@
 
 #include "CoreMinimal.h"
 
+#define DO_CLIENT_SIMULATION false
+#define RANDOM_SEED 1073741824
+

@@ -8,6 +8,7 @@
 #include "Controllers/PlayerControllers/SpaceshipController.h"
 #include "GameInstances/SpaceGameInstance.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "../ECSMaster.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -45,6 +46,8 @@ void ASpaceshipsManager::AddPlayerInput(AController* PlayerController, float Mov
 void ASpaceshipsManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	const FRandomStream RandomStream = UKismetMathLibrary::MakeRandomStream(RANDOM_SEED);
 	
 	USpaceGameInstance* SpaceGameInstance = Cast<USpaceGameInstance>( GetGameInstance());
 	ECSWorld = SpaceGameInstance->GetECSWorld();
@@ -71,23 +74,23 @@ void ASpaceshipsManager::BeginPlay()
 
 			// Transform
 			Location = FVector(
-				UKismetMathLibrary::RandomIntegerInRange(-SpawnRadius,SpawnRadius),
-				UKismetMathLibrary::RandomIntegerInRange(-SpawnRadius,SpawnRadius),
-				UKismetMathLibrary::RandomIntegerInRange(-SpawnRadius,SpawnRadius));
-			Rotation = FRotator(UKismetMathLibrary::RandomFloatInRange(0,359));
+				RandomStream.RandRange(-SpawnRadius,SpawnRadius),
+				RandomStream.RandRange(-SpawnRadius,SpawnRadius),
+				RandomStream.RandRange(-SpawnRadius,SpawnRadius));
+			Rotation = FRotator(RandomStream.FRandRange(0,359));
 			Spaceship.set<FSpaceshipTransform>({
 				Location,
 				Rotation
 			});
 			
 			// AI
-			const float Seed = UKismetMathLibrary::FClamp(UKismetMathLibrary::RandomFloat(),0.1,1);
+			const float Seed = UKismetMathLibrary::FClamp(RandomStream.FRand(),0.1,1);
 			Spaceship.set<FSpaceshipAI>({
 				Seed 
 			});
 
 			// Weapon
-			const float FireDelay = UKismetMathLibrary::RandomFloatInRange(5,10);
+			const float FireDelay = RandomStream.FRandRange(5,10);
 			Spaceship.set<FWeapon>({
 				FireDelay,
 				FireDelay*Seed
@@ -101,7 +104,7 @@ void ASpaceshipsManager::BeginPlay()
 
 	SpaceshipMovementUpdateQuery = ECSWorld->query<FSpaceship,FSpaceshipTransform>();
 
-#if !UE_SERVER || UE_EDITOR
+#if !UE_SERVER || UE_EDITOR || DO_CLIENT_SIMULATION
 
 	
 	SpaceshipsSMInstances->AddInstances(SpaceshipTransforms,true,true);
@@ -111,11 +114,11 @@ void ASpaceshipsManager::BeginPlay()
 
 #endif
 	
-#if UE_EDITOR
+#if UE_EDITOR || DO_CLIENT_SIMULATION
 	if(!HasAuthority()) return;
 #endif
 		
-#if UE_SERVER || UE_EDITOR
+#if UE_SERVER || UE_EDITOR || DO_CLIENT_SIMULATION
 
 	
 	
@@ -133,6 +136,7 @@ void ASpaceshipsManager::BeginPlay()
 	});
 
 	// AI fire sys
+	
 	auto fire_sys = ECSWorld->system<FWeapon,FSpaceshipTransform, FSpaceshipAI>()
 	.kind(flecs::PreUpdate)
 	.each([this](flecs::iter& it, size_t, FWeapon& W, FSpaceshipTransform& T, FSpaceshipAI& AI) {
@@ -148,6 +152,7 @@ void ASpaceshipsManager::BeginPlay()
 
 			BulletTransforms.Add(FTransform(T.Location));
 			
+			
 			W.FireCooldown = W.FireDelay*AI.Seed;
 		}
 		else
@@ -162,25 +167,22 @@ void ASpaceshipsManager::BeginPlay()
 	.each([this](flecs::iter& it, size_t index, FBullet& B) {
 		if(B.Lifetime <= 0)
 		{
-			if(BulletTransforms.IsValidIndex(index))
-				BulletTransforms.RemoveAt(index);
+			
+			BulletTransforms.RemoveAt(index-NumberOfDestroyedBulletDuringFrame);
+			
 			it.entity(index).destruct();
+			NumberOfDestroyedBulletDuringFrame++;
 		}
 		else
 		{
-			if(BulletTransforms.IsValidIndex(index))
-			{
-				// Location
-			B.Location += B.ForwardVector * 10000 * it.delta_time();
 			
-				BulletTransforms[index] = FTransform(B.Location);
+			// Location
+			B.Location += B.ForwardVector * 10000 * it.delta_time();
+				
+			BulletTransforms[index-NumberOfDestroyedBulletDuringFrame] = FTransform(B.Location);
 
 			B.Lifetime -= it.delta_time();
-			}
-			else
-			{
-				it.entity(index).destruct();
-			}
+			
 			
 		}
 		
@@ -196,7 +198,7 @@ void ASpaceshipsManager::BeginPlay()
 
 void ASpaceshipsManager::Server_AddPlayer_Implementation(AController* PlayerController)
 {
-#if UE_EDITOR
+#if UE_EDITOR || DO_CLIENT_SIMULATION
 	if(PlayerController->IsLocalController()) return;
 #endif
 	
@@ -247,10 +249,11 @@ void ASpaceshipsManager::Tick(float DeltaTime)
 
 	if(HasAuthority())
 	{
+		NumberOfDestroyedBulletDuringFrame = 0;
 		if(!ECSWorld->progress())
 			UE_LOG(LogTemp, Warning, TEXT("Unable to progess ECS World"));
 
-#if UE_EDITOR
+#if UE_EDITOR || DO_CLIENT_SIMULATION
 		SpaceshipsSMInstances->BatchUpdateInstancesTransforms(
 		0,
 		SpaceshipTransforms,
@@ -258,8 +261,35 @@ void ASpaceshipsManager::Tick(float DeltaTime)
 
 		if(BulletTransforms.Num() > 0)
 		{
-			BulletsSMInstances->ClearInstances();
-			BulletsSMInstances->AddInstances(BulletTransforms,false,true);
+			if(BulletsSMInstances->GetNumInstances() == BulletTransforms.Num())
+			{
+				BulletsSMInstances->BatchUpdateInstancesTransforms(
+					0,
+					BulletTransforms,
+					true);
+			}
+			else if(BulletsSMInstances->GetNumInstances() > BulletTransforms.Num())
+			{
+				TArray<int32> IndexesToRemove;
+				for(int32 Index = BulletTransforms.Num(); Index < BulletsSMInstances->GetNumInstances(); ++Index)
+				{
+					IndexesToRemove.Add(Index);
+				}
+				BulletsSMInstances->RemoveInstances(IndexesToRemove);
+				BulletsSMInstances->BatchUpdateInstancesTransforms(
+				0,
+				BulletTransforms,
+				true);
+			}
+			else
+			{
+				for(int32 Index = BulletsSMInstances->GetNumInstances(); Index < BulletTransforms.Num(); ++Index)
+				{
+					BulletsSMInstances->AddInstance(BulletTransforms[Index],true);
+				}
+			}
+			
+			
 		}
 #endif
 		

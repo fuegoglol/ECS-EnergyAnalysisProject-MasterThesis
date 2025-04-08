@@ -71,9 +71,12 @@ protected:
 
 	int32 LastFreePlayerId = 0;
 
+	int32 NumberOfDestroyedBulletDuringFrame = 0;
+
 	UPROPERTY(Replicated)
 	TArray<FTransform> SpaceshipTransforms;
 
 	UPROPERTY(Replicated)
 	TArray<FTransform> BulletTransforms;
+	
 };
